@@ -1,0 +1,4 @@
+syntax = "proto3";
+
+package blockchain;
+option go_package = "/blockchain/blockchainpb";
