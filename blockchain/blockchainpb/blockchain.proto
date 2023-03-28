@@ -3,8 +3,6 @@ syntax = "proto3";
 package blockchain;
 option go_package = "/blockchain/blockchainpb";
 
-import "google/protobuf/timestamp.proto";
-
 service Blockchain {
   rpc AddBlock(AddBlockRequest) returns (AddBlockResponse) {}
   rpc GetBlockchain(GetBlockChainRequest) returns (GetBlockChainResponse) {}
@@ -13,9 +11,8 @@ service Blockchain {
 message Block {
   int32 position = 1;
   string data = 2;
-  google.protobuf.Timestamp timestamp = 3;
-  string prevBlockHash = 4;
-  string hash = 5;
+  string prevBlockHash = 3;
+  string hash = 4;
 }
 
 message AddBlockRequest {
