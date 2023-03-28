@@ -3,9 +3,10 @@ syntax = "proto3";
 package blockchain;
 option go_package = "/blockchain/blockchainpb";
 
-service Blockchain {
+service BlockchainService {
   rpc AddBlock(AddBlockRequest) returns (AddBlockResponse) {}
-  rpc GetBlockchain(GetBlockChainRequest) returns (GetBlockChainResponse) {}
+  rpc GetBlock(GetBlockRequest) returns (Block) {}
+  rpc GetBlockchain(GetBlockChainRequest) returns (stream Block) {}
 }
 
 message Block {
@@ -13,6 +14,10 @@ message Block {
   string data = 2;
   string prevBlockHash = 3;
   string hash = 4;
+}
+
+message Blockchain {
+  repeated Block blocks = 1;
 }
 
 message AddBlockRequest {
@@ -23,8 +28,8 @@ message AddBlockResponse {
   string hash = 1;
 }
 
-message GetBlockChainRequest {}
-
-message GetBlockChainResponse {
-  repeated Block blocks = 1;
+message GetBlockRequest {
+  int32 position = 1;
 }
+
+message GetBlockChainRequest {}

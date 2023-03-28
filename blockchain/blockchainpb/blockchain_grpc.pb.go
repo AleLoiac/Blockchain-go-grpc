@@ -18,124 +18,188 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// BlockchainClient is the client API for Blockchain service.
+// BlockchainServiceClient is the client API for BlockchainService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type BlockchainClient interface {
+type BlockchainServiceClient interface {
 	AddBlock(ctx context.Context, in *AddBlockRequest, opts ...grpc.CallOption) (*AddBlockResponse, error)
-	GetBlockchain(ctx context.Context, in *GetBlockChainRequest, opts ...grpc.CallOption) (*GetBlockChainResponse, error)
+	GetBlock(ctx context.Context, in *GetBlockRequest, opts ...grpc.CallOption) (*Block, error)
+	GetBlockchain(ctx context.Context, in *GetBlockChainRequest, opts ...grpc.CallOption) (BlockchainService_GetBlockchainClient, error)
 }
 
-type blockchainClient struct {
+type blockchainServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewBlockchainClient(cc grpc.ClientConnInterface) BlockchainClient {
-	return &blockchainClient{cc}
+func NewBlockchainServiceClient(cc grpc.ClientConnInterface) BlockchainServiceClient {
+	return &blockchainServiceClient{cc}
 }
 
-func (c *blockchainClient) AddBlock(ctx context.Context, in *AddBlockRequest, opts ...grpc.CallOption) (*AddBlockResponse, error) {
+func (c *blockchainServiceClient) AddBlock(ctx context.Context, in *AddBlockRequest, opts ...grpc.CallOption) (*AddBlockResponse, error) {
 	out := new(AddBlockResponse)
-	err := c.cc.Invoke(ctx, "/blockchain.Blockchain/AddBlock", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/blockchain.BlockchainService/AddBlock", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *blockchainClient) GetBlockchain(ctx context.Context, in *GetBlockChainRequest, opts ...grpc.CallOption) (*GetBlockChainResponse, error) {
-	out := new(GetBlockChainResponse)
-	err := c.cc.Invoke(ctx, "/blockchain.Blockchain/GetBlockchain", in, out, opts...)
+func (c *blockchainServiceClient) GetBlock(ctx context.Context, in *GetBlockRequest, opts ...grpc.CallOption) (*Block, error) {
+	out := new(Block)
+	err := c.cc.Invoke(ctx, "/blockchain.BlockchainService/GetBlock", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// BlockchainServer is the server API for Blockchain service.
-// All implementations must embed UnimplementedBlockchainServer
+func (c *blockchainServiceClient) GetBlockchain(ctx context.Context, in *GetBlockChainRequest, opts ...grpc.CallOption) (BlockchainService_GetBlockchainClient, error) {
+	stream, err := c.cc.NewStream(ctx, &BlockchainService_ServiceDesc.Streams[0], "/blockchain.BlockchainService/GetBlockchain", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &blockchainServiceGetBlockchainClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type BlockchainService_GetBlockchainClient interface {
+	Recv() (*Block, error)
+	grpc.ClientStream
+}
+
+type blockchainServiceGetBlockchainClient struct {
+	grpc.ClientStream
+}
+
+func (x *blockchainServiceGetBlockchainClient) Recv() (*Block, error) {
+	m := new(Block)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// BlockchainServiceServer is the server API for BlockchainService service.
+// All implementations must embed UnimplementedBlockchainServiceServer
 // for forward compatibility
-type BlockchainServer interface {
+type BlockchainServiceServer interface {
 	AddBlock(context.Context, *AddBlockRequest) (*AddBlockResponse, error)
-	GetBlockchain(context.Context, *GetBlockChainRequest) (*GetBlockChainResponse, error)
-	mustEmbedUnimplementedBlockchainServer()
+	GetBlock(context.Context, *GetBlockRequest) (*Block, error)
+	GetBlockchain(*GetBlockChainRequest, BlockchainService_GetBlockchainServer) error
+	mustEmbedUnimplementedBlockchainServiceServer()
 }
 
-// UnimplementedBlockchainServer must be embedded to have forward compatible implementations.
-type UnimplementedBlockchainServer struct {
+// UnimplementedBlockchainServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedBlockchainServiceServer struct {
 }
 
-func (UnimplementedBlockchainServer) AddBlock(context.Context, *AddBlockRequest) (*AddBlockResponse, error) {
+func (UnimplementedBlockchainServiceServer) AddBlock(context.Context, *AddBlockRequest) (*AddBlockResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddBlock not implemented")
 }
-func (UnimplementedBlockchainServer) GetBlockchain(context.Context, *GetBlockChainRequest) (*GetBlockChainResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetBlockchain not implemented")
+func (UnimplementedBlockchainServiceServer) GetBlock(context.Context, *GetBlockRequest) (*Block, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlock not implemented")
 }
-func (UnimplementedBlockchainServer) mustEmbedUnimplementedBlockchainServer() {}
+func (UnimplementedBlockchainServiceServer) GetBlockchain(*GetBlockChainRequest, BlockchainService_GetBlockchainServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetBlockchain not implemented")
+}
+func (UnimplementedBlockchainServiceServer) mustEmbedUnimplementedBlockchainServiceServer() {}
 
-// UnsafeBlockchainServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to BlockchainServer will
+// UnsafeBlockchainServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BlockchainServiceServer will
 // result in compilation errors.
-type UnsafeBlockchainServer interface {
-	mustEmbedUnimplementedBlockchainServer()
+type UnsafeBlockchainServiceServer interface {
+	mustEmbedUnimplementedBlockchainServiceServer()
 }
 
-func RegisterBlockchainServer(s grpc.ServiceRegistrar, srv BlockchainServer) {
-	s.RegisterService(&Blockchain_ServiceDesc, srv)
+func RegisterBlockchainServiceServer(s grpc.ServiceRegistrar, srv BlockchainServiceServer) {
+	s.RegisterService(&BlockchainService_ServiceDesc, srv)
 }
 
-func _Blockchain_AddBlock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _BlockchainService_AddBlock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddBlockRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BlockchainServer).AddBlock(ctx, in)
+		return srv.(BlockchainServiceServer).AddBlock(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/blockchain.Blockchain/AddBlock",
+		FullMethod: "/blockchain.BlockchainService/AddBlock",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BlockchainServer).AddBlock(ctx, req.(*AddBlockRequest))
+		return srv.(BlockchainServiceServer).AddBlock(ctx, req.(*AddBlockRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Blockchain_GetBlockchain_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetBlockChainRequest)
+func _BlockchainService_GetBlock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBlockRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BlockchainServer).GetBlockchain(ctx, in)
+		return srv.(BlockchainServiceServer).GetBlock(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/blockchain.Blockchain/GetBlockchain",
+		FullMethod: "/blockchain.BlockchainService/GetBlock",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BlockchainServer).GetBlockchain(ctx, req.(*GetBlockChainRequest))
+		return srv.(BlockchainServiceServer).GetBlock(ctx, req.(*GetBlockRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Blockchain_ServiceDesc is the grpc.ServiceDesc for Blockchain service.
+func _BlockchainService_GetBlockchain_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetBlockChainRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(BlockchainServiceServer).GetBlockchain(m, &blockchainServiceGetBlockchainServer{stream})
+}
+
+type BlockchainService_GetBlockchainServer interface {
+	Send(*Block) error
+	grpc.ServerStream
+}
+
+type blockchainServiceGetBlockchainServer struct {
+	grpc.ServerStream
+}
+
+func (x *blockchainServiceGetBlockchainServer) Send(m *Block) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+// BlockchainService_ServiceDesc is the grpc.ServiceDesc for BlockchainService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Blockchain_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "blockchain.Blockchain",
-	HandlerType: (*BlockchainServer)(nil),
+var BlockchainService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "blockchain.BlockchainService",
+	HandlerType: (*BlockchainServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "AddBlock",
-			Handler:    _Blockchain_AddBlock_Handler,
+			Handler:    _BlockchainService_AddBlock_Handler,
 		},
 		{
-			MethodName: "GetBlockchain",
-			Handler:    _Blockchain_GetBlockchain_Handler,
+			MethodName: "GetBlock",
+			Handler:    _BlockchainService_GetBlock_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetBlockchain",
+			Handler:       _BlockchainService_GetBlockchain_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "blockchain/blockchainpb/blockchain.proto",
 }
