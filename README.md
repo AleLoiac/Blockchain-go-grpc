@@ -1,5 +1,5 @@
 # Simple Blockchain example using Go, gRPC and Badger
-This is a blockchain built with Go and gRPC. It allows users to view and add nodes through a gRPC API.
+This project illustrates how a simple Blockchain works. It allows users to view and add nodes through a gRPC API.
 
 ## Getting Started
 
