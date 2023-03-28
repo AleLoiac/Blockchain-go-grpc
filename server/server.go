@@ -18,7 +18,9 @@ import (
 )
 
 func (s *Server) GetLastBlock() *blockchainpb.Block {
+
 	var lastBlock *blockchainpb.Block
+
 	err := s.db.View(func(txn *badger.Txn) error {
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 1
@@ -90,6 +92,7 @@ func (s *Server) AddBlock(ctx context.Context, req *blockchainpb.AddBlockRequest
 }
 
 func (s *Server) NewBlock(data string) *blockchainpb.Block {
+
 	hash := sha256.Sum256([]byte(data))
 	strHash := hex.EncodeToString(hash[:])
 
@@ -203,6 +206,7 @@ func (s *Server) checkGenesis() bool {
 	req := &blockchainpb.GetBlockRequest{Position: 0}
 
 	block, _ := s.GetBlock(context.Background(), req)
+
 	if block.GetData() == "Genesis Block" {
 		return true
 	} else {
@@ -211,6 +215,7 @@ func (s *Server) checkGenesis() bool {
 }
 
 func (s *Server) NewBlockchain() *blockchainpb.Blockchain {
+
 	return &blockchainpb.Blockchain{
 		Blocks: []*blockchainpb.Block{
 			s.NewGenesisBlock(),
