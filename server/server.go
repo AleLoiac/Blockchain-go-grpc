@@ -121,7 +121,7 @@ func (s *Server) NewBlock(data string) *blockchainpb.Block {
 
 func (s *Server) GetBlock(ctx context.Context, req *blockchainpb.GetBlockRequest) (*blockchainpb.Block, error) {
 
-	fmt.Printf("GetBlock function is invoked with: %v\n", req)
+	fmt.Printf("GetBlock function is invoked with block at position: %v\n", req.GetPosition())
 
 	var block blockchainpb.Block
 
@@ -198,6 +198,18 @@ func (s *Server) NewGenesisBlock() *blockchainpb.Block {
 	return s.NewBlock("Genesis Block")
 }
 
+func (s *Server) checkGenesis() bool {
+
+	req := &blockchainpb.GetBlockRequest{Position: 0}
+
+	block, _ := s.GetBlock(context.Background(), req)
+	if block.GetData() == "Genesis Block" {
+		return true
+	} else {
+		return false
+	}
+}
+
 func (s *Server) NewBlockchain() *blockchainpb.Blockchain {
 	return &blockchainpb.Blockchain{
 		Blocks: []*blockchainpb.Block{
@@ -222,7 +234,10 @@ func main() {
 	defer db.Close()
 
 	server := NewServer(db)
-	server.NewBlockchain()
+
+	if server.checkGenesis() == false {
+		server.NewBlockchain()
+	}
 
 	lis, err := net.Listen("tcp", "0.0.0.0:50051")
 	if err != nil {
