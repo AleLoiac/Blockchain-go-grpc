@@ -62,7 +62,7 @@ func (s *Server) AddBlock(ctx context.Context, req *blockchainpb.AddBlockRequest
 	lastBlock := s.GetLastBlock()
 
 	//create the hash and encode it to a string
-	hash := sha256.Sum256([]byte(lastBlock.Hash + req.Data))
+	hash := sha256.Sum256([]byte(lastBlock.Hash + req.GetData().GetGameId() + req.GetData().GetUser() + req.GetData().GetCheckoutDate()))
 	strHash := hex.EncodeToString(hash[:])
 
 	block := &blockchainpb.Block{
@@ -92,14 +92,14 @@ func (s *Server) AddBlock(ctx context.Context, req *blockchainpb.AddBlockRequest
 	}, nil
 }
 
-func (s *Server) NewBlock(data string) *blockchainpb.Block {
+func (s *Server) NewBlock(checkout *blockchainpb.GameCheckout) *blockchainpb.Block {
 
-	hash := sha256.Sum256([]byte(data))
+	hash := sha256.Sum256([]byte(checkout.GetGameId() + checkout.GetUser() + checkout.GetCheckoutDate()))
 	strHash := hex.EncodeToString(hash[:])
 
 	block := &blockchainpb.Block{
 		Position:      0,
-		Data:          data,
+		Data:          checkout,
 		PrevBlockHash: "",
 		Hash:          strHash,
 	}
@@ -200,7 +200,14 @@ func (s *Server) GetBlockchain(req *blockchainpb.GetBlockChainRequest, stream bl
 
 func (s *Server) NewGenesisBlock() *blockchainpb.Block {
 
-	return s.NewBlock("Genesis Block")
+	emptyCheckout := &blockchainpb.GameCheckout{
+		GameId:       "",
+		User:         "",
+		CheckoutDate: "",
+		IsGenesis:    true,
+	}
+
+	return s.NewBlock(emptyCheckout)
 }
 
 func (s *Server) CheckGenesis() bool {
@@ -209,7 +216,7 @@ func (s *Server) CheckGenesis() bool {
 
 	block, _ := s.GetBlock(context.Background(), req)
 
-	if block.GetData() == "Genesis Block" {
+	if block.GetData().GetIsGenesis() == true {
 		return true
 	} else {
 		return false
@@ -236,12 +243,12 @@ func (s *Server) AddVideoGame(ctx context.Context, req *blockchainpb.AddVideoGam
 		ReleaseDate: req.GetReleaseDate(),
 	}
 
-	err := s.db.Update(func(txn *badger.Txn) error {
+	err := s.dbGames.Update(func(txn *badger.Txn) error {
 		gameData, err := proto.Marshal(game)
 		if err != nil {
 			return err
 		}
-		return txn.Set([]byte("game_"+game.Id), gameData)
+		return txn.Set([]byte(game.Id), gameData)
 	})
 
 	if err != nil {
@@ -261,11 +268,12 @@ func (s *Server) AddVideoGame(ctx context.Context, req *blockchainpb.AddVideoGam
 
 type Server struct {
 	blockchainpb.BlockchainServiceServer
-	db *badger.DB
+	db      *badger.DB
+	dbGames *badger.DB
 }
 
-func NewServer(db *badger.DB) *Server {
-	return &Server{db: db}
+func NewServer(db *badger.DB, dbGames *badger.DB) *Server {
+	return &Server{db: db, dbGames: dbGames}
 }
 
 func main() {
@@ -274,7 +282,10 @@ func main() {
 	db, _ := badger.Open(badger.DefaultOptions("/Users/aless/Desktop/Go/Blockchain/DB"))
 	defer db.Close()
 
-	server := NewServer(db)
+	dbGames, _ := badger.Open(badger.DefaultOptions("/Users/aless/Desktop/Go/Blockchain/games_DB"))
+	defer dbGames.Close()
+
+	server := NewServer(db, dbGames)
 
 	if server.CheckGenesis() == false {
 		server.NewBlockchain()
