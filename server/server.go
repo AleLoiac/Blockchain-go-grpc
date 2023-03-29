@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/dgraph-io/badger/v3"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
@@ -72,11 +73,11 @@ func (s *Server) AddBlock(ctx context.Context, req *blockchainpb.AddBlockRequest
 	}
 
 	err := s.db.Update(func(txn *badger.Txn) error {
-		productData, err := proto.Marshal(block)
+		blockData, err := proto.Marshal(block)
 		if err != nil {
 			return err
 		}
-		return txn.Set([]byte(strconv.Itoa(int(block.Position))), productData)
+		return txn.Set([]byte(strconv.Itoa(int(block.Position))), blockData)
 	})
 
 	if err != nil {
@@ -198,10 +199,11 @@ func (s *Server) GetBlockchain(req *blockchainpb.GetBlockChainRequest, stream bl
 }
 
 func (s *Server) NewGenesisBlock() *blockchainpb.Block {
+
 	return s.NewBlock("Genesis Block")
 }
 
-func (s *Server) checkGenesis() bool {
+func (s *Server) CheckGenesis() bool {
 
 	req := &blockchainpb.GetBlockRequest{Position: 0}
 
@@ -223,6 +225,40 @@ func (s *Server) NewBlockchain() *blockchainpb.Blockchain {
 	}
 }
 
+func (s *Server) AddVideoGame(ctx context.Context, req *blockchainpb.AddVideoGameRequest) (*blockchainpb.VideoGame, error) {
+
+	fmt.Printf("AddVideoGame function is invoked with: %v\n", req)
+
+	game := &blockchainpb.VideoGame{
+		Id:          uuid.New().String(),
+		Title:       req.GetTitle(),
+		Publisher:   req.GetPublisher(),
+		ReleaseDate: req.GetReleaseDate(),
+	}
+
+	err := s.db.Update(func(txn *badger.Txn) error {
+		gameData, err := proto.Marshal(game)
+		if err != nil {
+			return err
+		}
+		return txn.Set([]byte("game_"+game.Id), gameData)
+	})
+
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Failed to create game: %v", err),
+		)
+	}
+
+	return &blockchainpb.VideoGame{
+		Id:          game.GetId(),
+		Title:       game.GetTitle(),
+		Publisher:   game.GetPublisher(),
+		ReleaseDate: game.GetReleaseDate(),
+	}, nil
+}
+
 type Server struct {
 	blockchainpb.BlockchainServiceServer
 	db *badger.DB
@@ -240,7 +276,7 @@ func main() {
 
 	server := NewServer(db)
 
-	if server.checkGenesis() == false {
+	if server.CheckGenesis() == false {
 		server.NewBlockchain()
 	}
 

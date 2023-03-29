@@ -25,6 +25,7 @@ type BlockchainServiceClient interface {
 	AddBlock(ctx context.Context, in *AddBlockRequest, opts ...grpc.CallOption) (*AddBlockResponse, error)
 	GetBlock(ctx context.Context, in *GetBlockRequest, opts ...grpc.CallOption) (*Block, error)
 	GetBlockchain(ctx context.Context, in *GetBlockChainRequest, opts ...grpc.CallOption) (BlockchainService_GetBlockchainClient, error)
+	AddVideoGame(ctx context.Context, in *AddVideoGameRequest, opts ...grpc.CallOption) (*VideoGame, error)
 }
 
 type blockchainServiceClient struct {
@@ -85,6 +86,15 @@ func (x *blockchainServiceGetBlockchainClient) Recv() (*Block, error) {
 	return m, nil
 }
 
+func (c *blockchainServiceClient) AddVideoGame(ctx context.Context, in *AddVideoGameRequest, opts ...grpc.CallOption) (*VideoGame, error) {
+	out := new(VideoGame)
+	err := c.cc.Invoke(ctx, "/blockchain.BlockchainService/AddVideoGame", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BlockchainServiceServer is the server API for BlockchainService service.
 // All implementations must embed UnimplementedBlockchainServiceServer
 // for forward compatibility
@@ -92,6 +102,7 @@ type BlockchainServiceServer interface {
 	AddBlock(context.Context, *AddBlockRequest) (*AddBlockResponse, error)
 	GetBlock(context.Context, *GetBlockRequest) (*Block, error)
 	GetBlockchain(*GetBlockChainRequest, BlockchainService_GetBlockchainServer) error
+	AddVideoGame(context.Context, *AddVideoGameRequest) (*VideoGame, error)
 	mustEmbedUnimplementedBlockchainServiceServer()
 }
 
@@ -107,6 +118,9 @@ func (UnimplementedBlockchainServiceServer) GetBlock(context.Context, *GetBlockR
 }
 func (UnimplementedBlockchainServiceServer) GetBlockchain(*GetBlockChainRequest, BlockchainService_GetBlockchainServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetBlockchain not implemented")
+}
+func (UnimplementedBlockchainServiceServer) AddVideoGame(context.Context, *AddVideoGameRequest) (*VideoGame, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddVideoGame not implemented")
 }
 func (UnimplementedBlockchainServiceServer) mustEmbedUnimplementedBlockchainServiceServer() {}
 
@@ -178,6 +192,24 @@ func (x *blockchainServiceGetBlockchainServer) Send(m *Block) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _BlockchainService_AddVideoGame_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddVideoGameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlockchainServiceServer).AddVideoGame(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/blockchain.BlockchainService/AddVideoGame",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlockchainServiceServer).AddVideoGame(ctx, req.(*AddVideoGameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BlockchainService_ServiceDesc is the grpc.ServiceDesc for BlockchainService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -192,6 +224,10 @@ var BlockchainService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetBlock",
 			Handler:    _BlockchainService_GetBlock_Handler,
+		},
+		{
+			MethodName: "AddVideoGame",
+			Handler:    _BlockchainService_AddVideoGame_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
