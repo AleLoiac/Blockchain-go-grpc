@@ -120,11 +120,11 @@ func (s *Server) NewBlock(checkout *blockchainpb.GameCheckout) *blockchainpb.Blo
 	}
 
 	err := s.db.Update(func(txn *badger.Txn) error {
-		productData, err := proto.Marshal(block)
+		blockData, err := proto.Marshal(block)
 		if err != nil {
 			return err
 		}
-		return txn.Set([]byte(strconv.Itoa(int(block.Position))), productData)
+		return txn.Set([]byte(strconv.Itoa(int(block.Position))), blockData)
 	})
 
 	if err != nil {
