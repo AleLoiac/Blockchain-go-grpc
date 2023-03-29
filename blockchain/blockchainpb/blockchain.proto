@@ -42,7 +42,9 @@ message Blockchain {
 }
 
 message AddBlockRequest {
-  gameCheckout data = 1;
+  string game_id = 1;
+  string user = 2;
+  string checkout_date = 3;
 }
 
 message AddBlockResponse {

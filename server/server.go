@@ -62,17 +62,32 @@ func (s *Server) AddBlock(ctx context.Context, req *blockchainpb.AddBlockRequest
 	lastBlock := s.GetLastBlock()
 
 	//create the hash and encode it to a string
-	hash := sha256.Sum256([]byte(lastBlock.Hash + req.GetData().GetGameId() + req.GetData().GetUser() + req.GetData().GetCheckoutDate()))
+	hash := sha256.Sum256([]byte(lastBlock.Hash + req.GetGameId() + req.GetUser() + req.GetCheckoutDate()))
 	strHash := hex.EncodeToString(hash[:])
+
+	data := &blockchainpb.GameCheckout{
+		GameId:       req.GetGameId(),
+		User:         req.GetUser(),
+		CheckoutDate: req.GetCheckoutDate(),
+		IsGenesis:    false,
+	}
+
+	err := s.dbGames.View(func(txn *badger.Txn) error {
+		_, err := txn.Get([]byte(req.GetGameId()))
+		if err != nil {
+			return status.Errorf(codes.NotFound, fmt.Sprintf("Cannot find game with id: %v", req.GetGameId()))
+		}
+		return err
+	})
 
 	block := &blockchainpb.Block{
 		Position:      lastBlock.Position + 1,
-		Data:          req.Data,
+		Data:          data,
 		PrevBlockHash: lastBlock.Hash,
 		Hash:          strHash,
 	}
 
-	err := s.db.Update(func(txn *badger.Txn) error {
+	err = s.db.Update(func(txn *badger.Txn) error {
 		blockData, err := proto.Marshal(block)
 		if err != nil {
 			return err
