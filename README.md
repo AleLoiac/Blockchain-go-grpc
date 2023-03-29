@@ -1,5 +1,7 @@
 # Simple Blockchain example using Go, gRPC and Badger
 This project illustrates how a simple Blockchain works. It allows users to view and add nodes through a gRPC API.
+Each node stores the transaction data of the purchase of a videogame.
+If the game ID doesn't exist in the DB the transaction is blocked and the blockchain doesn't add the node.
 
 ## Getting Started
 
@@ -28,6 +30,7 @@ The blockchain supports the following API methods:
 * AddBlock
 * GetBlock
 * GetBlockchain
+* AddVideoGame
 
 ### Postman
 
