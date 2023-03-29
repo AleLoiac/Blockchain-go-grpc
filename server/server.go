@@ -79,6 +79,9 @@ func (s *Server) AddBlock(ctx context.Context, req *blockchainpb.AddBlockRequest
 		}
 		return err
 	})
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("Cannot find game with id: %v", req.GetGameId()))
+	}
 
 	block := &blockchainpb.Block{
 		Position:      lastBlock.Position + 1,
