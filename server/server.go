@@ -30,7 +30,7 @@ func (s *Server) GetLastBlock() *blockchainpb.Block {
 		defer it.Close()
 
 		// Iterate in reverse order to get the last block
-		for it.Rewind(); it.Valid(); it.Next() {
+		for it.Rewind(); it.Valid(); {
 			item := it.Item()
 			err := item.Value(func(v []byte) error {
 				block := &blockchainpb.Block{}
@@ -283,6 +283,8 @@ func (s *Server) AddVideoGame(ctx context.Context, req *blockchainpb.AddVideoGam
 		ReleaseDate: game.GetReleaseDate(),
 	}, nil
 }
+
+//todo ListVideoGames
 
 type Server struct {
 	blockchainpb.BlockchainServiceServer
