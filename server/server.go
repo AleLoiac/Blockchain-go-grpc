@@ -286,6 +286,8 @@ func (s *Server) AddVideoGame(ctx context.Context, req *blockchainpb.AddVideoGam
 
 //todo ListVideoGames
 
+//todo add timestamp
+
 type Server struct {
 	blockchainpb.BlockchainServiceServer
 	db      *badger.DB
