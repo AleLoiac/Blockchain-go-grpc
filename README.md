@@ -32,6 +32,8 @@ The blockchain supports the following API methods:
 * GetBlock
 * GetBlockchain
 * AddVideoGame
+* GetVideoGame
+* ListVideoGames
 
 ### Postman
 
