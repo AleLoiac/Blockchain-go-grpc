@@ -4,6 +4,8 @@ It allows users to view and add nodes through a gRPC API.
 Each node stores transaction data for the purchase of a video game.
 If the game ID does not exist in the database, the transaction is blocked and the blockchain does not add the node.
 
+Each new block in the blockchain is created by computing a hash value based on the data it contains, including the transaction data, and the hash of the previous block in the chain.
+This hash value serves as a unique identifier for the block and ensures that any modification to the block or the chain would be immediately detectable.
 ## Getting Started
 
 To get started, follow these steps:
