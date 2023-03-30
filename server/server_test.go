@@ -3,7 +3,10 @@ package main
 import (
 	"Blockchain/blockchain/blockchainpb"
 	"context"
+	"fmt"
 	"github.com/dgraph-io/badger/v3"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"testing"
 )
@@ -86,5 +89,106 @@ func TestGetVideoGame(t *testing.T) {
 	}
 	if res.ReleaseDate != game.ReleaseDate {
 		t.Errorf("Expected release date %v, got %v", game.ReleaseDate, res.ReleaseDate)
+	}
+}
+
+func TestAddBlock(t *testing.T) {
+	// Mock database
+	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true))
+	if err != nil {
+		t.Fatalf("Failed to create mock database: %v", err)
+	}
+	defer db.Close()
+
+	dbGames, err := badger.Open(badger.DefaultOptions("").WithInMemory(true))
+	if err != nil {
+		t.Fatalf("Failed to create mock database: %v", err)
+	}
+	defer dbGames.Close()
+
+	// Server instance
+	server := &Server{db: db, dbGames: dbGames}
+
+	server.NewBlockchain()
+
+	req := &blockchainpb.AddBlockRequest{
+		GameId:       "test-id",
+		User:         "Test User",
+		CheckoutDate: "01-01-2023",
+	}
+
+	game := &blockchainpb.VideoGame{
+		Id:          "test-id",
+		Title:       "Test Game",
+		Publisher:   "Test Publisher",
+		ReleaseDate: "01-01-2023",
+	}
+
+	err = server.dbGames.Update(func(txn *badger.Txn) error {
+		gameData, err := proto.Marshal(game)
+		if err != nil {
+			return err
+		}
+		return txn.Set([]byte(game.Id), gameData)
+	})
+
+	if err != nil {
+		status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Failed to create game: %v", err),
+		)
+	}
+
+	got, err := server.AddBlock(context.Background(), req)
+	if err != nil {
+		t.Fatalf("Failed to create block: %v", err)
+	}
+
+	if got.Hash == "" {
+		t.Error("Expected non-empty Hash")
+	}
+}
+
+func TestGetBlock(t *testing.T) {
+
+	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true))
+	if err != nil {
+		t.Fatalf("Failed to create mock database: %v", err)
+	}
+	defer db.Close()
+
+	server := &Server{db: db}
+
+	server.NewBlockchain()
+
+	req := &blockchainpb.GetBlockRequest{
+		Position: 0,
+	}
+
+	got, err := server.GetBlock(context.Background(), req)
+	if err != nil {
+		t.Fatalf("Failed to get block: %v", err)
+	}
+
+	if got.Position != req.Position {
+		t.Errorf("Expected position %q, got %q", req.Position, got.Position)
+	}
+	if got.PrevBlockHash != "" {
+		t.Errorf("Expected previous block hash %q", "")
+	}
+	if got.Hash == "" {
+		t.Errorf("Expected not empty hash")
+	}
+	if got.Data.GameId != "" {
+		t.Errorf("Expected game ID %q", "")
+	}
+	if got.Data.User != "" {
+		t.Errorf("Expected user %q", "")
+	}
+	if got.Data.CheckoutDate != "" {
+		t.Errorf("Expected checkout date %q", "")
+	}
+	if got.Data.IsGenesis != true {
+		t.Errorf("Expected genesis block")
 	}
 }
