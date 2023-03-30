@@ -25,7 +25,7 @@ message AddVideoGameRequest {
   string release_date = 3;
 }
 
-message gameCheckout {
+message GameCheckout {
   string game_id = 1;
   string user = 2;
   string checkout_date = 3;
@@ -34,7 +34,7 @@ message gameCheckout {
 
 message Block {
   int32 position = 1;
-  gameCheckout data = 2;
+  GameCheckout data = 2;
   string prev_block_hash = 3;
   string hash = 4;
 }
