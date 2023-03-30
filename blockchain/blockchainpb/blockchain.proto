@@ -8,6 +8,8 @@ service BlockchainService {
   rpc GetBlock (GetBlockRequest) returns (Block) {}
   rpc GetBlockchain (GetBlockChainRequest) returns (stream Block) {}
   rpc AddVideoGame (AddVideoGameRequest) returns (VideoGame) {}
+  rpc GetVideoGame(GetVideoGameRequest) returns (VideoGame) {}
+  rpc ListVideoGames (Empty) returns (stream VideoGame) {}
 }
 
 message VideoGame {
@@ -56,3 +58,9 @@ message GetBlockRequest {
 }
 
 message GetBlockChainRequest {}
+
+message GetVideoGameRequest {
+  string game_id = 1;
+}
+
+message Empty {}

@@ -26,6 +26,8 @@ type BlockchainServiceClient interface {
 	GetBlock(ctx context.Context, in *GetBlockRequest, opts ...grpc.CallOption) (*Block, error)
 	GetBlockchain(ctx context.Context, in *GetBlockChainRequest, opts ...grpc.CallOption) (BlockchainService_GetBlockchainClient, error)
 	AddVideoGame(ctx context.Context, in *AddVideoGameRequest, opts ...grpc.CallOption) (*VideoGame, error)
+	GetVideoGame(ctx context.Context, in *GetVideoGameRequest, opts ...grpc.CallOption) (*VideoGame, error)
+	ListVideoGames(ctx context.Context, in *Empty, opts ...grpc.CallOption) (BlockchainService_ListVideoGamesClient, error)
 }
 
 type blockchainServiceClient struct {
@@ -95,6 +97,47 @@ func (c *blockchainServiceClient) AddVideoGame(ctx context.Context, in *AddVideo
 	return out, nil
 }
 
+func (c *blockchainServiceClient) GetVideoGame(ctx context.Context, in *GetVideoGameRequest, opts ...grpc.CallOption) (*VideoGame, error) {
+	out := new(VideoGame)
+	err := c.cc.Invoke(ctx, "/blockchain.BlockchainService/GetVideoGame", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *blockchainServiceClient) ListVideoGames(ctx context.Context, in *Empty, opts ...grpc.CallOption) (BlockchainService_ListVideoGamesClient, error) {
+	stream, err := c.cc.NewStream(ctx, &BlockchainService_ServiceDesc.Streams[1], "/blockchain.BlockchainService/ListVideoGames", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &blockchainServiceListVideoGamesClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type BlockchainService_ListVideoGamesClient interface {
+	Recv() (*VideoGame, error)
+	grpc.ClientStream
+}
+
+type blockchainServiceListVideoGamesClient struct {
+	grpc.ClientStream
+}
+
+func (x *blockchainServiceListVideoGamesClient) Recv() (*VideoGame, error) {
+	m := new(VideoGame)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // BlockchainServiceServer is the server API for BlockchainService service.
 // All implementations must embed UnimplementedBlockchainServiceServer
 // for forward compatibility
@@ -103,6 +146,8 @@ type BlockchainServiceServer interface {
 	GetBlock(context.Context, *GetBlockRequest) (*Block, error)
 	GetBlockchain(*GetBlockChainRequest, BlockchainService_GetBlockchainServer) error
 	AddVideoGame(context.Context, *AddVideoGameRequest) (*VideoGame, error)
+	GetVideoGame(context.Context, *GetVideoGameRequest) (*VideoGame, error)
+	ListVideoGames(*Empty, BlockchainService_ListVideoGamesServer) error
 	mustEmbedUnimplementedBlockchainServiceServer()
 }
 
@@ -121,6 +166,12 @@ func (UnimplementedBlockchainServiceServer) GetBlockchain(*GetBlockChainRequest,
 }
 func (UnimplementedBlockchainServiceServer) AddVideoGame(context.Context, *AddVideoGameRequest) (*VideoGame, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddVideoGame not implemented")
+}
+func (UnimplementedBlockchainServiceServer) GetVideoGame(context.Context, *GetVideoGameRequest) (*VideoGame, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetVideoGame not implemented")
+}
+func (UnimplementedBlockchainServiceServer) ListVideoGames(*Empty, BlockchainService_ListVideoGamesServer) error {
+	return status.Errorf(codes.Unimplemented, "method ListVideoGames not implemented")
 }
 func (UnimplementedBlockchainServiceServer) mustEmbedUnimplementedBlockchainServiceServer() {}
 
@@ -210,6 +261,45 @@ func _BlockchainService_AddVideoGame_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BlockchainService_GetVideoGame_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetVideoGameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlockchainServiceServer).GetVideoGame(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/blockchain.BlockchainService/GetVideoGame",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlockchainServiceServer).GetVideoGame(ctx, req.(*GetVideoGameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BlockchainService_ListVideoGames_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(Empty)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(BlockchainServiceServer).ListVideoGames(m, &blockchainServiceListVideoGamesServer{stream})
+}
+
+type BlockchainService_ListVideoGamesServer interface {
+	Send(*VideoGame) error
+	grpc.ServerStream
+}
+
+type blockchainServiceListVideoGamesServer struct {
+	grpc.ServerStream
+}
+
+func (x *blockchainServiceListVideoGamesServer) Send(m *VideoGame) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // BlockchainService_ServiceDesc is the grpc.ServiceDesc for BlockchainService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -229,11 +319,20 @@ var BlockchainService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "AddVideoGame",
 			Handler:    _BlockchainService_AddVideoGame_Handler,
 		},
+		{
+			MethodName: "GetVideoGame",
+			Handler:    _BlockchainService_GetVideoGame_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "GetBlockchain",
 			Handler:       _BlockchainService_GetBlockchain_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "ListVideoGames",
+			Handler:       _BlockchainService_ListVideoGames_Handler,
 			ServerStreams: true,
 		},
 	},

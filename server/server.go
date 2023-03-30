@@ -284,9 +284,80 @@ func (s *Server) AddVideoGame(ctx context.Context, req *blockchainpb.AddVideoGam
 	}, nil
 }
 
-//todo ListVideoGames
+func (s *Server) GetVideoGame(ctx context.Context, req *blockchainpb.GetVideoGameRequest) (*blockchainpb.VideoGame, error) {
 
-//todo add timestamp
+	fmt.Printf("GetVideoGame function is invoked with: %v\n", req)
+
+	var game blockchainpb.VideoGame
+
+	err := s.dbGames.View(func(txn *badger.Txn) error {
+		item, err := txn.Get([]byte(req.GetGameId()))
+		if err != nil {
+			return err
+		}
+		err = item.Value(func(val []byte) error {
+			err = proto.Unmarshal(val, &game)
+			if err != nil {
+				fmt.Printf("Error unmarshaling game data: %v\n", err)
+				return err
+			}
+			return nil
+		})
+		return err
+	})
+
+	if err != nil {
+		if err == badger.ErrKeyNotFound {
+			return nil, status.Errorf(
+				codes.NotFound,
+				fmt.Sprintf("Game with ID '%s' not found", req.GameId),
+			)
+		} else {
+			return nil, status.Errorf(
+				codes.Internal,
+				fmt.Sprintf("Failed to get game: %v", err),
+			)
+		}
+	}
+
+	return &blockchainpb.VideoGame{
+		Id:          game.GetId(),
+		Title:       game.GetTitle(),
+		Publisher:   game.GetPublisher(),
+		ReleaseDate: game.GetReleaseDate(),
+	}, nil
+}
+
+func (s *Server) ListVideoGames(req *blockchainpb.Empty, stream blockchainpb.BlockchainService_ListVideoGamesServer) error {
+
+	fmt.Println("ListVideoGames function is invoked with an empty request")
+
+	opts := badger.DefaultIteratorOptions
+	opts.PrefetchSize = 10
+	opts.PrefetchValues = false
+
+	err := s.dbGames.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(opts)
+		defer it.Close()
+		for it.Rewind(); it.Valid(); it.Next() {
+			item := it.Item()
+			key := item.Key()
+			game, err := s.GetVideoGame(stream.Context(), &blockchainpb.GetVideoGameRequest{GameId: string(key)})
+			if err != nil {
+				return err
+			}
+			if err = stream.Send(game); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
 
 type Server struct {
 	blockchainpb.BlockchainServiceServer
