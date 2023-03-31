@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"log"
 	"net"
 	"strconv"
@@ -86,6 +87,7 @@ func (s *Server) AddBlock(ctx context.Context, req *blockchainpb.AddBlockRequest
 	block := &blockchainpb.Block{
 		Position:      lastBlock.Position + 1,
 		Data:          data,
+		Timestamp:     timestamppb.Now(),
 		PrevBlockHash: lastBlock.Hash,
 		Hash:          strHash,
 	}
@@ -118,6 +120,7 @@ func (s *Server) NewBlock(checkout *blockchainpb.GameCheckout) *blockchainpb.Blo
 	block := &blockchainpb.Block{
 		Position:      0,
 		Data:          checkout,
+		Timestamp:     timestamppb.Now(),
 		PrevBlockHash: "",
 		Hash:          strHash,
 	}
@@ -180,6 +183,7 @@ func (s *Server) GetBlock(ctx context.Context, req *blockchainpb.GetBlockRequest
 	return &blockchainpb.Block{
 		Position:      block.GetPosition(),
 		Data:          block.GetData(),
+		Timestamp:     block.GetTimestamp(),
 		PrevBlockHash: block.GetPrevBlockHash(),
 		Hash:          block.GetHash(),
 	}, nil
