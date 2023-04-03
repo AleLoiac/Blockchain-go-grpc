@@ -30,7 +30,7 @@ func (s *Server) GetLastBlock() *blockchainpb.Block {
 		it := txn.NewIterator(opts)
 		defer it.Close()
 
-		// Iterate in reverse order to get the last block
+		// Iterate in reverse order to get the last block, it.Next() not reachable if included
 		for it.Rewind(); it.Valid(); {
 			item := it.Item()
 			err := item.Value(func(v []byte) error {
