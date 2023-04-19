@@ -3,6 +3,10 @@ syntax = "proto3";
 package blockchain;
 option go_package = "/blockchain/blockchainpb";
 
+//correct names for a project
+//package blockchain.v1;
+//option go_package = "/apis/blockchain/v1";
+
 import "google/protobuf/timestamp.proto";
 
 service BlockchainService {
