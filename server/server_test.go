@@ -47,6 +47,29 @@ func TestAddVideoGame(t *testing.T) {
 	}
 }
 
+/*
+func TestAddVideoGame(t *testing.T) {
+	// Mock database
+	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true))
+	if err != nil {
+		t.Fatalf("Failed to create mock database: %v", err)
+	}
+	defer db.Close()
+
+	// Server instance
+	server := &Server{dbGames: db}
+
+	want := &blockchainpb.AddVideoGameRequest{
+		Title:       "Test Game",
+		Publisher:   "Test Publisher",
+		ReleaseDate: "01-01-2023",
+	}
+	got, err := server.AddVideoGame(context.Background(), want)
+	require.NoError(t, err)
+	require.Equal(t, want, got)
+}
+*/
+
 func TestGetVideoGame(t *testing.T) {
 
 	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true))
